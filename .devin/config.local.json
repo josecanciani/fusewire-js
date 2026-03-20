@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Exec(git diff)",
+      "Exec(docker ps)",
+      "Exec(docker exec)",
+      "Exec(wc)",
+      "Exec(tail)",
+      "Exec(docker inspect)",
+      "Exec(ls)",
+      "Exec(git log)",
+      "Exec(npm version)",
+      "Exec(npx oxlint)",
+      "Exec(npx oxfmt)",
+      "Exec(npm run)",
+      "Exec(git status)",
+      "Exec(mkdir)",
+      "Exec(git submodule)",
+      "Exec(cat)",
+      "Exec(head)"
+    ]
+  }
+}

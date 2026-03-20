@@ -1,0 +1,23 @@
+{
+  "name": "fusewire-js",
+  "version": "0.1.0",
+  "description": "Fusewire JS Express application",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "lint": "oxlint src/",
+    "format": "oxfmt --write src/",
+    "format:check": "oxfmt --check src/",
+    "test": "node --test src/**/*.test.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0"
+  }
+}
