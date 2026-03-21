@@ -11,11 +11,11 @@ app.use(express.json());
 app.use("/js", express.static(join(__dirname, "static", "lib")));
 
 app.get("/", (req, res) => {
-	res.json({ status: "ok" });
+  res.json({ status: "ok" });
 });
 
 app.listen(port, () => {
-	console.log(`Server listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });
 
 export default app;

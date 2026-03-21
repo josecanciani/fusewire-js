@@ -8,7 +8,7 @@
     "lint": "oxlint src/",
     "format": "oxfmt --write src/",
     "format:check": "oxfmt --check src/",
-    "test": "node --test src/**/*.test.js"
+    "test": "node --test test/**/*.test.js"
   },
   "dependencies": {
     "express": "^5.1.0"
