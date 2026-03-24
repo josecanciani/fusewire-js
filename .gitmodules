@@ -1,0 +1,3 @@
+[submodule "lib/fusewire"]
+	path = lib/fusewire
+	url = git@github.com:josecanciani/fusewire.git
