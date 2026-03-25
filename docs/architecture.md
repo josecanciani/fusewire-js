@@ -117,9 +117,48 @@ When a string representation is needed (DOM attributes, cache keys, protocol fie
 
 Templates and component data are versioned. The version is a short hex string derived from a **content hash** of the component's files (`.html`, `.css`, `.js`). Previous implementations used the file modification timestamp, but mtimes are unreliable across deployments (containers and CI pipelines reset them). Content hashing is deterministic -- the same files always produce the same version, regardless of when or where they were built -- which means clients keep their cached templates across redeployments that don't change component files.
 
+#### Server-Side Versioning
+
 The server computes versions using SHA-256 (truncated to 12 hex characters) via the `node:crypto` built-in module and caches results in memory. In production the cache lives for the lifetime of the process (restart to pick up new files). In development the cache can be invalidated on file change.
 
 The client sends its known version when requesting data; the server can skip sending the template if the client already has it. This enables efficient caching and selective reloading.
+
+#### Client-Side Versioning (No Server Required)
+
+For client-only applications or static websites without a server, the client must compute template versions autonomously. The `TemplateStore` uses the Web Crypto API (`crypto.subtle.digest`) to compute SHA-256 hashes client-side when fetching templates:
+
+```js
+const version = await templateStore.fetch('ComponentName', '/components/');
+// Fetches ComponentName.html, ComponentName.css, ComponentName.js
+// Computes SHA-256(html + css + js) → version hash (12 hex chars)
+```
+
+**Version Change Detection:** When a component's template files are updated (during deployment or CDN refresh), the next fetch produces a different content hash. The framework detects the version mismatch and triggers a **variable migration** flow:
+
+1. Load component with stored vars from previous session
+2. Compare stored version vs. current template version
+3. If versions differ → call `Component.migrateVars(vars)` to handle migration
+4. Store migrated vars with new version
+
+**Migration Hook:** Components override `static migrateVars(vars)` to handle version transitions:
+
+```js
+class Counter extends Component {
+  static migrateVars(vars) {
+    // No version parameter — just inspect vars structure
+    // Developer can maintain custom version field if needed
+    if (!vars.count && vars.value !== undefined) {
+      // Migrate old 'value' field to new 'count' field
+      return { count: vars.value };
+    }
+    return vars;  // No migration needed
+  }
+}
+```
+
+The content hash is **opaque** — no semantic version comparison. Developers who need explicit version tracking can maintain a custom `vars._version` field and check it inside `migrateVars()`.
+
+**Service Worker Auto-Update (Plan 4):** A Service Worker periodically fetches component files in the background, computes hashes, and detects version changes. When a new version is found, components are automatically reloaded (without user notification) on their next render cycle. This provides seamless upgrades even for offline-first client-only applications.
 
 ### Templates
 
