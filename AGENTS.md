@@ -41,6 +41,41 @@ Before considering a change complete, run:
 npm run lint && npm run format:check && npm test
 ```
 
+## Testing
+
+### Server Tests (Parent Project)
+```bash
+npm test
+```
+- Tests for Express server and server-side component logic
+- Located in `test/` directory
+
+### Client Library Tests (Submodule)
+The client library (`lib/fusewire/`) has two types of tests - see `lib/fusewire/AGENTS.md` for details:
+
+**Node Tests (Fast - Run Always):**
+```bash
+cd lib/fusewire && npm test
+```
+- 200 tests: 193 passing, 7 skipped (JSDOM/idiomorph incompatibility)
+- Runs in Node.js using JSDOM for DOM emulation
+- Use for development, CI, quick validation
+
+**Browser Tests (Slow - Run Selectively):**
+```bash
+cd lib/fusewire && npm run test:browser
+```
+- 4 tests validating DOM morphing in real browser (Chromium via Playwright)
+- Run when making morphing changes or before committing
+
+**Both:**
+```bash
+cd lib/fusewire && npm run test:all
+```
+- Total: 197 tests passing (193 Node + 4 Browser)
+
+**Note:** The 7 skipped Node tests are covered by browser tests. See `lib/fusewire/AGENTS.md` for the full testing strategy.
+
 ## Constraints
 
 - **Modern JavaScript only.** Use only modern JS features (ES2020+). No legacy patterns, no polyfills.
