@@ -17,18 +17,7 @@ export default [
 
             // Ban generic types - require specific types
             'jsdoc/check-types': 'error',
-            'jsdoc/no-undefined-types': [
-                'error',
-                {
-                    definedTypes: [
-                        'Express',
-                        'Request',
-                        'Response',
-                        'NextFunction',
-                        'Application',
-                    ],
-                },
-            ],
+            'jsdoc/no-undefined-types': 'error',
 
             // Enforce valid JSDoc syntax
             'jsdoc/check-tag-names': 'error',

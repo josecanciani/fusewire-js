@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "checkJs": true,
+        "noEmit": true,
+        "strict": false,
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ESNext"],
+        "types": ["node"],
+        "skipLibCheck": true
+    },
+    "include": ["src/**/*.js"],
+    "exclude": ["src/static/**"]
+}

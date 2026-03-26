@@ -9,7 +9,8 @@
     "format": "oxfmt --write src/",
     "format:check": "oxfmt --check src/",
     "test": "node --test test/**/*.test.js",
-    "jsdoc-check": "eslint src/"
+    "jsdoc-check": "eslint src/",
+    "typecheck": "tsc -p jsconfig.json --noEmit"
   },
   "dependencies": {
     "express": "^5.1.0"
@@ -18,9 +19,12 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
     "eslint": "^10.1.0",
     "eslint-plugin-jsdoc": "^62.8.1",
     "oxfmt": "^0.41.0",
-    "oxlint": "^1.56.0"
+    "oxlint": "^1.56.0",
+    "typescript": "^6.0.2"
   }
 }

@@ -33,19 +33,20 @@ fusewire-js/
 | `npm run format`        | Format source files with oxfmt     |
 | `npm run format:check`  | Check formatting without writing   |
 | `npm run jsdoc-check`   | Validate JSDoc documentation       |
+| `npm run typecheck`     | Type-check JS files with TypeScript |
 
 ## Verification
 
 Before considering a change complete, run:
 
 ```bash
-npm run lint && npm run format:check && npm run jsdoc-check && npm test
+npm run lint && npm run format:check && npm run jsdoc-check && npm run typecheck && npm test
 ```
 
 When changes touch the client library submodule (`lib/fusewire/`), also run its full verification:
 
 ```bash
-cd lib/fusewire && npm run lint && npm run format:check && npm run jsdoc-check && npm test
+cd lib/fusewire && npm run lint && npm run format:check && npm run jsdoc-check && npm run typecheck && npm test
 ```
 
 ## Testing
@@ -87,11 +88,13 @@ cd lib/fusewire && npm run test:all
 
 - **Modern JavaScript only.** Use only modern JS features (ES2020+). No legacy patterns, no polyfills.
 - **ES modules only.** All files use `import`/`export`. No CommonJS (`require`/`module.exports`).
+- **No setters.** Avoid setter methods and `set` accessors. Prefer passing state at construction time (via constructor/config). Follow a functional pattern — objects should be configured once, not mutated after creation. Internal framework wiring (e.g., setting `_reactor` on instances) is acceptable.
 
 ## Code Style
 
 - **Indentation:** 4 spaces (not tabs)
 - **Quotes:** Single quotes for strings
+- **No hardcoded duplicates:** Never repeat a value that is already stored in a variable or derived from code. If a path, name, or label appears in log messages, error messages, or comments, reference the variable — don't hardcode the string a second time.
 - Enforced via oxfmt configuration and automated tests
 
 ## JSDoc Documentation
