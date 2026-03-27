@@ -78,7 +78,7 @@ This separation is a core design principle: HTML templates are plain HTML with t
 
 #### Directory Layout
 
-Components live under `src/components/`. The directory path maps to the component name using `_` as a separator:
+Components live under `src/components/`. The directory path maps directly to the component name:
 
 ```
 src/components/
@@ -87,31 +87,33 @@ src/components/
   Index.html
   Index.css
   Dashlet/
-    ServerTime.server.js     # component name: Dashlet_ServerTime
+    ServerTime.server.js     # component name: Dashlet/ServerTime
     ServerTime.js
     ServerTime.html
     ServerTime.css
 ```
 
+The component name uses `/` as a directory separator. When used in CSS class names, `/` is replaced with `_` via the `toCssName()` utility (e.g. `fusewire-component-Dashlet_ServerTime`).
+
 The server mounts this directory at `/js/components/` with a filter that excludes `*.server.js` files, so that client files are fetchable transparently at predictable URLs (e.g. `/js/components/Dashlet/ServerTime.js`). No manual per-component route registration is needed.
 
 ### Component Identity
 
-Every component has a **name** (derived from its module path, e.g. `Dashlet_ServerTime`) and an optional **id** for distinguishing multiple instances of the same component.
+Every component has a **name** (the directory-based path, e.g. `Dashlet/ServerTime`) and an optional **id** for distinguishing multiple instances of the same component.
 
-In code, identity is represented as a structured `ComponentId` object with `name` and `id` properties -- not as a concatenated string. This avoids delimiter collisions (component names already contain underscores). Helper constructors parse serialized forms:
+In code, identity is represented as a structured `ComponentId` object with `name` and `id` properties -- not as a concatenated string. This avoids delimiter collisions. Helper constructors parse serialized forms:
 
 ```js
 // Construction
-const cid = new ComponentId('Dashlet_ServerTime', 'sidebar');
-cid.name  // 'Dashlet_ServerTime'
+const cid = new ComponentId('Dashlet/ServerTime', 'sidebar');
+cid.name  // 'Dashlet/ServerTime'
 cid.id    // 'sidebar'
 
 // From a serialized code string (e.g. from the DOM or protocol)
-const cid = ComponentId.fromCode('Dashlet_ServerTime#sidebar');
+const cid = ComponentId.fromCode('Dashlet/ServerTime#sidebar');
 ```
 
-When a string representation is needed (DOM attributes, cache keys, protocol fields), the format is `{name}#{id}`. When the id is empty, the trailing `#` is omitted (e.g. `Dashlet_ServerTime`). The `#` separator is unambiguous because component names only contain word characters and underscores.
+When a string representation is needed (DOM attributes, cache keys, protocol fields), the format is `{name}#{id}`. When the id is empty, the trailing `#` is omitted (e.g. `Dashlet/ServerTime`). The `#` separator is unambiguous because component names only contain word characters, underscores, and forward slashes.
 
 ### Versioning
 
@@ -128,9 +130,9 @@ The client sends its known version when requesting data; the server can skip sen
 For client-only applications or static websites without a server, the client must compute template versions autonomously. The `TemplateStore` uses the Web Crypto API (`crypto.subtle.digest`) to compute SHA-256 hashes client-side when fetching templates:
 
 ```js
-const version = await templateStore.fetch('ComponentName', '/components/');
-// Fetches ComponentName.html, ComponentName.css, ComponentName.js
-// Computes SHA-256(html + css + js) → version hash (12 hex chars)
+const version = await templateStore.fetch('ComponentName', './components');
+// Fetches ComponentName.html, ComponentName.css
+// Computes SHA-256(html + css) → version hash (12 hex chars)
 ```
 
 **Version Change Detection:** When a component's template files are updated (during deployment or CDN refresh), the next fetch produces a different content hash. The framework detects the version mismatch and triggers a **variable migration** flow:
@@ -174,7 +176,7 @@ Component JS modules are **not** part of the template. They are served as standa
 Templates are plain HTML files with two kinds of dynamic features:
 
 **Variable interpolation** uses `(( ))` delimiters:
-- `((variableName))` -- render a variable value. If the variable is a component (or array of components), the renderer expands it into mount-point elements automatically.
+- `((variableName))` -- render a variable value. If the variable is a `ComponentReference` (or array of references), the renderer expands it into mount-point elements automatically.
 - `((this))` -- reference to the component instance (for event handlers in HTML).
 
 **Control-flow directives** use `fw-` prefixed HTML attributes:
@@ -251,12 +253,14 @@ The framework supports multiple rendering strategies. A component can switch mod
 
 ## Component Tree
 
-Components can contain child components. A server variable whose value is a Component is serialized with `fusewire-type: "component"` and rendered as a mount-point element (with a `data-fusewire-id` attribute) in the parent's HTML. The framework recursively creates, fetches, and renders child components. Arrays of Components are expanded into multiple mount points.
+Components can contain child components. On the client, child components are declared as `ComponentReference` objects (created via `this.createChild(name, [id], vars)`) stored in the parent's vars. The template compiler recognises these references and renders them as mount-point elements (with a `data-fusewire-id` attribute). The `InstanceRegistry` discovers the mount points after rendering the parent, resolves each `ComponentReference` to a real `Component` instance (loading the class by name via dynamic `import()` or a pre-registered lookup), and recursively renders the children. Arrays of references are expanded into multiple mount points.
+
+On the server, a variable whose value is a Component is serialized with `fusewire-type: "component"` in the protocol response.
 
 ```
 Index (root)
   |-- counter: 0 (plain variable)
-  |-- serverDateString: Dashlet_ServerTime (child component)
+  |-- serverDateString: Dashlet/ServerTime (child component)
         |-- serverDateString: "Thursday, 19-Mar-26 ..." (plain variable)
 ```
 
@@ -269,7 +273,7 @@ Communication uses two endpoints:
 
 This split lets CDNs and browser HTTP caches serve templates directly, while dynamic component data flows through the Reactor as before.
 
-Component identity uses a single string field `id` with the format `{name}#{id}` (e.g. `Table#dashboard`, `TableRow#0`). When the instance id is empty, the `#` is omitted (e.g. `Dashlet_ServerTime`). A `ComponentId` helper parses this into separate `name` and `id` properties.
+Component identity uses a single string field `id` with the format `{name}#{id}` (e.g. `Table#dashboard`, `TableRow#0`). When the instance id is empty, the `#` is omitted (e.g. `Dashlet/ServerTime`). A `ComponentId` helper parses this into separate `name` and `id` properties.
 
 ### Reactor Request
 
@@ -351,7 +355,7 @@ Templates are served via a dedicated `GET` endpoint so they benefit from standar
 GET /fusewire/templates/:componentName/:version
 ```
 
-- `:componentName` -- the component name (e.g. `Dashlet_ServerTime`).
+- `:componentName` -- the component name (e.g. `Dashlet/ServerTime`).
 - `:version` -- the expected content-hash version (e.g. `a1b2c3d4e5f6`).
 
 The version is part of the URL path, so when a component's files change, the version (and therefore the URL) changes automatically. This makes every URL an **immutable snapshot** -- there is no need for ETags or conditional requests.
@@ -361,7 +365,7 @@ The version is part of the URL path, so when a component's files change, the ver
 ```json
 {
   "fusewire-type": "template",
-  "id": "Dashlet_ServerTime",
+  "id": "Dashlet/ServerTime",
   "jsUrl": "/js/components/Dashlet/ServerTime.js",
   "cssCode": ".servertime { color: green; }",
   "htmlCode": "((serverDateString))",
@@ -389,14 +393,15 @@ Cache-Control: public, max-age=31536000, immutable
 
 ## Client Architecture
 
-The client framework lives in `src/static/lib/fusewire/` and is served at `/js/fusewire/`. Key modules:
+The client framework lives in the `lib/fusewire/` submodule and is served at `/js/`. Key modules:
 
 | Module         | Responsibility |
 |----------------|---------------|
-| `reactor.js`   | Orchestrator. Manages the react/fetch/render loop. Registers custom elements. Handles in-flight request deduplication. |
-| `instance.js`  | Instance DAO. Tracks all live component instances, their vars, and versions. Handles create/update/remove/render. |
+| `reactor.js`   | Orchestrator. Manages the react/fetch/render loop. Provides `basePath` for component file resolution (default `./components`). Templates are lazy-loaded on first use. Accepts string component names (not classes) via `start()`. |
+| `instance.js`  | Instance DAO. Tracks all live component instances, their vars, and versions. Handles create/update/remove/render. Resolves `ComponentReference` declarations to real instances via `createFromReference()`. Manages parent-child relationships for cascade destruction. |
+| `component.js` | Base `Component` class. Provides `createChild(name, [id], vars)` for declaring child components as lightweight `ComponentReference` objects. |
+| `component-reference.js` | Lightweight declaration carrying `componentName`, `id`, `vars`, and `version`. Created by `Component.createChild()`, resolved to real instances by the `InstanceRegistry` at render time. |
 | `template.js`  | Template DAO. Caches templates via the Cache API (through a Service Worker). Fetches from server when missing or stale. |
-| `component.js` | Base `Component` class. |
 | `renderer.js`  | Template compilation and DOM morphing. Compiles HTML templates into render functions on first use. Applies vars to produce HTML, then morphs the DOM (via idiomorph). Manages CSS injection. |
 | `server.js`    | HTTP communication. Sends component data requests to the Reactor endpoint and template requests to the template endpoint. |
 | `config.js`    | Configuration object (server URL, client URL, tags, logging, etc.). |
@@ -600,7 +605,7 @@ Developers can detect the refreshing state via the CSS class and style according
 ```
 Browser
   |
-  |-- GET /js/fusewire/*          -->  express.static  -->  src/static/lib/fusewire/
+  |-- GET /js/fusewire/*          -->  express.static  -->  lib/fusewire/src/
   |                                     (client framework modules)
   |
   |-- GET /js/components/*        -->  express.static  -->  src/components/

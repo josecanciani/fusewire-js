@@ -1,9 +1,9 @@
-import { createHash } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 const HASH_LENGTH = 12;
-const EXTENSIONS = [".html", ".css", ".js"];
+const EXTENSIONS = ['.html', '.css', '.js'];
 
 const cache = new Map();
 
@@ -26,7 +26,7 @@ export async function getComponentVersion(componentDir, baseName) {
     return cached;
   }
 
-  const hash = createHash("sha256");
+  const hash = createHash('sha256');
   let hasContent = false;
 
   for (const ext of EXTENSIONS) {
@@ -42,7 +42,7 @@ export async function getComponentVersion(componentDir, baseName) {
     throw new Error(`No component files found for "${baseName}" in ${componentDir}`);
   }
 
-  const version = hash.digest("hex").slice(0, HASH_LENGTH);
+  const version = hash.digest('hex').slice(0, HASH_LENGTH);
   cache.set(key, version);
   return version;
 }

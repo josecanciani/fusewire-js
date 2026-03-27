@@ -139,6 +139,6 @@ Key documents:
 
 - Source files live under `src/`.
 - Components live under `src/components/` with all files colocated (`.server.js`, `.js`, `.html`, `.css`). See `docs/architecture.md` for naming conventions.
-- Static/client-side framework files live under `src/static/lib/`. Files there are served under the `/js` URL path (e.g. `src/static/lib/fusewire/foo.js` is served at `/js/fusewire/foo.js`).
+- The client-side framework lives in the `lib/fusewire/` submodule. The server mounts its `src/` directory under the `/js` URL path (e.g. `lib/fusewire/src/reactor.js` is served at `/js/reactor.js`).
 - Tests live under `test/` using the `*.test.js` suffix. Test files import from `../src/`.
 - Config files are gitignored; use `config/*.template` for templates.
