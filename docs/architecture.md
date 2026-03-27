@@ -653,8 +653,8 @@ export default class Table extends Component {
   run() {
     this.headers = ['Name', 'Email', 'Role'];
     this.rows = [
-      new TableRow('0', { cells: ['Alice', 'alice@example.com', 'Admin'] }),
-      new TableRow('1', { cells: ['Bob', 'bob@example.com', 'Editor'] }),
+      this.createChild('TableRow', '0', { cells: ['Alice', 'alice@example.com', 'Admin'] }),
+      this.createChild('TableRow', '1', { cells: ['Bob', 'bob@example.com', 'Editor'] }),
     ];
   }
 }
