@@ -229,7 +229,7 @@ The framework supports multiple rendering strategies. A component can switch mod
        |
 4. Create or update instance
        |-- If new: import JS module via dynamic import(), instantiate class, set vars, call hydrate()
-       |-- If existing: update vars, call update(oldVars)
+       |-- If existing: merge new vars via update(newVars), re-render
        |
 5. Render
        |-- Re-run compiled template with new vars, DOM-morph against current DOM
@@ -247,7 +247,7 @@ The framework supports multiple rendering strategies. A component can switch mod
 | Hook         | When                                      | Async | Notes |
 |--------------|-------------------------------------------|-------|-------|
 | `hydrate()`  | After first creation or server var update, before render | Yes | Safe for async init work |
-| `update(oldVars)` | After server vars are updated on an existing instance | No | Synchronous to avoid race conditions |
+| `update(newVars)` | Merges new vars into the component (shallow Object.assign) | No | Triggers re-render by default; server-side flow passes `react=false` |
 | `onError(error)` | When a server fetch or render fails for this component or an unhandled child | No | Return `true` to mark as handled and stop bubbling. See [Error Recovery](#error-recovery). |
 | `destroy()`  | When the instance is removed               | No  | Cleanup logic |
 
@@ -480,7 +480,7 @@ The resulting complete HTML is useful for caching entire pages (e.g. home pages 
 - DetailPanel makes its own independent Reactor requests. From the Reactor's perspective, it is a standalone top-level component.
 - Live pushes for Dashboard cover InteractiveChart (Dashboard's known child) but not DetailPanel. DetailPanel subscribes independently for live pushes if it declares `static live = true`.
 
-**Parent re-renders.** When Dashboard re-renders (from a push or Reactor response), InteractiveChart receives `update(oldVars)` with the new initial vars from Dashboard. InteractiveChart decides via `update()` what to accept and what to keep from its local state. Its own children (ChartTooltip, DetailPanel) are unaffected unless InteractiveChart's client logic explicitly recreates them.
+**Parent re-renders.** When Dashboard re-renders (from a push or Reactor response), InteractiveChart receives `update(newVars)` with the new vars from Dashboard. InteractiveChart decides via `update()` what to accept and what to keep from its local state. Its own children (ChartTooltip, DetailPanel) are unaffected unless InteractiveChart's client logic explicitly recreates them.
 
 **Reconstruction from cache.** Each server-authoritative component in the chain has its own cache entry. CSR_ONLY components in between are recreated by their parents:
 
@@ -589,7 +589,7 @@ When confirmed vars exist in cache for a component being created, the framework 
 
 1. Component created with confirmed vars from cache -> `hydrate()` called -> render.
 2. `fusewire-refreshing` CSS class added to the container.
-3. Server responds with fresh data -> confirmed vars and local vars updated -> cache updated -> `update(oldVars)` called -> re-render.
+3. Server responds with fresh data -> confirmed vars and local vars updated -> cache updated -> `update(newVars)` called -> re-render.
 4. `fusewire-refreshing` CSS class removed.
 
 If the server fetch fails, the error recovery flow applies normally (see [Error Recovery](#error-recovery)). The cached render is kept -- the user sees stale data with an error indicator rather than nothing.
